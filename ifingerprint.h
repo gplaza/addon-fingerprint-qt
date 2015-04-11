@@ -1,5 +1,5 @@
-//ifndef IFINGERPRINT_H
-
+#ifndef IFINGERPRINT_H
+#define IFINGERPRINT_H
 #include <QDebug>
 
 class IFingerprint : public QObject
@@ -22,6 +22,6 @@ signals:
 
 Q_DECLARE_INTERFACE (IFingerprint,"cl.gplaza.IFingerprint/1.0")
 
-//endif // IFINGERPRINT_H
+#endif // IFINGERPRINT_H
 
 
