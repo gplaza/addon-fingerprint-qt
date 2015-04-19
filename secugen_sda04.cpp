@@ -93,6 +93,40 @@ int SecugenSda04::getuserIDavailable()
     return i;
 }
 
+QList<int> SecugenSda04::getuserIDs()
+{
+    DataContainer dataContainer;
+    QByteArray data;
+    QByteArray tmp;
+    QString u;
+    QSet<int> ids;
+    int id,i;
+    bool ok;
+    QList<int> list;
+
+    executeCommand(0x7d,dataContainer);
+
+    if(dataContainer.error() == SecugenSda04::ERROR_DB_NO_DATA)
+        qDebug() << "ID Empty";
+    else {
+
+        data = dataContainer.packet();
+
+        for(i = 0; i <= data.size(); i = i+2)
+        {
+            tmp = data.mid(i,2);
+            u = QString::number(tmp[1], 16) + QString::number(tmp[0], 16);
+            id = u.toInt(&ok,10);
+            ids.insert(id);
+        }
+
+        list = QList<int>::fromSet(ids);
+        qSort(list);
+    }
+
+    return list;
+}
+
 int SecugenSda04::integerFromArray(QByteArray array, int start, int lenght)
 {
     int num = 0;

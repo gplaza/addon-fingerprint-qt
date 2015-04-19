@@ -172,6 +172,7 @@ public:
     QVariant scanFinger();
     int getImage(QByteArray &img, int imageSize = SecugenSda04::IMAGE_FULL_SIZE);
     int getuserIDavailable();
+    QList<int> getuserIDs();
 
     int registerNewUserStart(int userID);
     int registerNewUserEnd(int userID);
