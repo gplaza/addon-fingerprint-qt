@@ -405,58 +405,56 @@ void SecugenSda04::executeCommand(const char cmd, DataContainer &dataContainer, 
     if (serial.waitForBytesWritten(1000)) {
 
         QByteArray ack;
+        int i = 0;
 
-        while(ack.size() < 12)
+        while(ack.size() < 12 && i < timeoutSerial)
+        {
             if(serial.waitForReadyRead(1000))
                 ack += serial.readAll();
+            i++;
+        }
 
-        dataContainer.setAck(ack);
-        int completeSize = dataContainer.packetSize();
+        if(i == timeoutSerial) {
 
-        qDebug() << "Serial response :";
-        qDebug() << "ACK Error : " << dataContainer.stringError();
-        qDebug() << "Check sum : " << dataContainer.checkSum();
-        qDebug() << "Parameter 01 : " << dataContainer.param1();
-        qDebug() << "Parameter 02 : " << dataContainer.param2();
-        qDebug() << "ACK Packet size : " << completeSize;
-
-        if(dataContainer.error() == SecugenSda04::ERROR_NONE)
-        {
-            if(completeSize > 0)
-            {
-                qDebug() << "get the data packet on the serial port ...";
-
-                QByteArray data = ack.right(ack.size() - 12);
-                int percentage = 10;
-
-                while(data.size() < completeSize)
-                    if(serial.waitForReadyRead(100))
-                    {
-                        data += serial.readAll();
-
-                        // Only for getImage (Command 0x43)
-                        if(cmd == 0x43)
-                        {
-                            if(100*data.size()/completeSize >= percentage)
-                            {
-                                emit partialComplete(percentage);
-                                percentage += 10;
-                            }
-                        }
-                    }
-
-                qDebug() << "data received (size : " << data.size() << ")";
-
-                if (data.size() > 0)
-                    dataContainer.setPacket(data);
-            }
+            error = true;
 
         } else {
-            sendError(dataContainer.error());
+
+            dataContainer.setAck(ack);
+            int completeSize = dataContainer.packetSize();
+
+            qDebug() << "Serial response :";
+            qDebug() << "ACK Error : " << dataContainer.stringError();
+            qDebug() << "Check sum : " << dataContainer.checkSum();
+            qDebug() << "Parameter 01 : " << dataContainer.param1();
+            qDebug() << "Parameter 02 : " << dataContainer.param2();
+            qDebug() << "ACK Packet size : " << completeSize;
+
+            if(dataContainer.error() == SecugenSda04::ERROR_NONE)
+            {
+                if(completeSize > 0)
+                {
+                    qDebug() << "get the data packet on the serial port ...";
+
+                    QByteArray data = ack.right(ack.size() - 12);
+
+                    while(data.size() < completeSize)
+                        if(serial.waitForReadyRead(100))
+                            data += serial.readAll();
+
+                    qDebug() << "data received (size : " << data.size() << ")";
+
+                    if (data.size() > 0)
+                        dataContainer.setPacket(data);
+                }
+
+            } else {
+                emit sendError(dataContainer.error());
+            }
         }
+
     }
 
-    qDebug() << "close serial";
     serial.close();
 }
 
