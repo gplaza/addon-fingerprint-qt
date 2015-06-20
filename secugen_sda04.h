@@ -214,6 +214,9 @@ public:
         IMAGE_HALF_SIZE = 1
     };
 
+protected:
+    bool error;
+
 private:
     QSerialPort serial;
     QByteArray response;
