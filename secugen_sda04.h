@@ -221,6 +221,7 @@ private:
     QSerialPort serial;
     QByteArray response;
     QString serialPort;
+    int timeoutSerial;
     int integerFromArray(QByteArray array, int start, int lenght = 2);
     QString characterToHexQString(const char character);
     std::vector<int> intToHex(int id);

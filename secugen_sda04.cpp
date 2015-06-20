@@ -3,12 +3,17 @@
 
 SecugenSda04::SecugenSda04(const QString serialPort): IFingerprint() {
 
+    error = false;
+    timeoutSerial = 5;
     serial.setPortName(serialPort);
 
     DataContainer dataContainer;
-    executeCommand(0x20,dataContainer,0x00,0x18,0x01,0x00);// ANSI 378
+    executeCommand(0x20,dataContainer,0x00,0x18,0x01,0x00); // ANSI 378
 
-    qDebug() << "Init secugen SDA04 fingerprintreader : " << serialPort;
+    qDebug() << "Init fingerprintreader Secugen SDA04 : " << serialPort;
+
+    if(error)
+        qCritical() << "Fingerprintreader not detected";
 }
 
 void SecugenSda04::setSerialPort(qint32 baudRate)
