@@ -58,7 +58,7 @@ void SecugenSda04::waitForFinger()
 
 void SecugenSda04::stopWaitForFinger()
 {
-    if(timerFinger)
+    if(timerFinger && !error)
         timerFinger->stop();
 }
 
