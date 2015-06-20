@@ -51,6 +51,12 @@ void SecugenSda04::waitForFinger()
     timerFinger->start(500);
 }
 
+void SecugenSda04::stopWaitForFinger()
+{
+    if(timerFinger)
+        timerFinger->stop();
+}
+
 int SecugenSda04::getuserIDavailable()
 {
     DataContainer dataContainer;

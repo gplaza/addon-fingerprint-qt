@@ -10,12 +10,14 @@ public :
     virtual ~IFingerprint() {}
     virtual QVariant scanFinger() = 0;
     virtual void waitForFinger() = 0;
+    virtual void stopWaitForFinger() = 0;
 
 public slots:
     virtual void checkFingerTouch() = 0;
 
 signals:
     void fingerDetected();
+    void unknownFinger();
     void sendError(int error);
 
 };

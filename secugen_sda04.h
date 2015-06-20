@@ -228,6 +228,7 @@ private slots:
 
 public slots:
     void waitForFinger();
+    void stopWaitForFinger();
     int deleteUser(int userID);
     int registerUser(QString hash, int userID);
 
