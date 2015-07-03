@@ -209,6 +209,11 @@ public:
         ERROR_UNKNOWN_COMMAND = 0xFF //Commands unknown
     };
 
+    enum formatMinutiae{
+        SG400 = 0,
+        ANSI378 = 1
+    };
+
     enum ImageSize{
         IMAGE_FULL_SIZE = 0,
         IMAGE_HALF_SIZE = 1
@@ -216,6 +221,7 @@ public:
 
 protected:
     bool error;
+    void executeCommand(const char cmd, DataContainer &dataContainer, const char param1Hight = 0x00, const char param1Low = 0x00, const char param2Hight = 0x00, const char param2Low = 0x00,const char lwExtraDataHight = 0x00,const char lwExtraDataLow = 0x00,const char hwExtraDataHight = 0x00,const char hwExtraDataLow = 0x00, quint32 baudRate = QSerialPort::Baud9600, QByteArray data= QByteArray());
 
 private:
     QSerialPort serial;
@@ -225,7 +231,6 @@ private:
     int integerFromArray(QByteArray array, int start, int lenght = 2);
     QString characterToHexQString(const char character);
     std::vector<int> intToHex(int id);
-    void executeCommand(const char cmd, DataContainer &dataContainer, const char param1Hight = 0x00, const char param1Low = 0x00, const char param2Hight = 0x00, const char param2Low = 0x00,const char lwExtraDataHight = 0x00,const char lwExtraDataLow = 0x00,const char hwExtraDataHight = 0x00,const char hwExtraDataLow = 0x00, quint32 baudRate = QSerialPort::Baud9600, QByteArray data= QByteArray());
 
 private slots:
     virtual void checkFingerTouch() = 0;
@@ -234,7 +239,7 @@ public slots:
     void waitForFinger();
     void stopWaitForFinger();
     int deleteUser(int userID);
-    int registerUser(QString hash, int userID);
+    int registerUser(QString hash, int userID, bool replace = false, int format = SecugenSda04::ANSI378);
 
 signals:
     void resultReady(DataContainer *data);

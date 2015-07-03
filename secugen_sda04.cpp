@@ -6,10 +6,6 @@ SecugenSda04::SecugenSda04(const QString serialPort): IFingerprint() {
     error = false;
     timeoutSerial = 5;
     serial.setPortName(serialPort);
-
-    DataContainer dataContainer;
-    executeCommand(0x20,dataContainer,0x00,0x18,0x01,0x00); // ANSI 378
-
     qDebug() << "Init fingerprintreader Secugen SDA04 : " << serialPort;
 
     if(error)
@@ -160,13 +156,15 @@ int SecugenSda04::integerFromArray(QByteArray array, int start, int lenght)
     return (!ok)? 0 : num;
 }
 
-int SecugenSda04::registerUser(QString hash, int userID)
+int SecugenSda04::registerUser(QString hash, int userID, bool replace, int format)
 {
     QByteArray binHash;
     binHash.append(hash);
     binHash = QByteArray::fromBase64(binHash);
 
-    int sizeFingerprint = 2 + 2 + 800 + 800 + 11 + 1;
+    int sizeM = (format == SecugenSda04::ANSI378)? 800 : 400;
+
+    int sizeFingerprint = 2 + 2 + (sizeM * 2) + 11 + 1;
     QByteArray newFingerprint;
     newFingerprint.resize(sizeFingerprint);
 
@@ -180,49 +178,62 @@ int SecugenSda04::registerUser(QString hash, int userID)
 
     // Check number of template :
     int sizeTotal = binHash.size();
-    int sizeT1 = integerFromArray(binHash,8);
 
     qDebug() << "Hash detail :";
     qDebug() << "Size total : " << sizeTotal;
 
-    QByteArray t1;
-    QByteArray t2;
-    int sizeT2;
-
-    if(sizeTotal == sizeT1)
+    if(format == SecugenSda04::ANSI378)
     {
-        qDebug() << "Number of template : 1";
+        int sizeT1 = integerFromArray(binHash,8);
 
-        t1 = binHash.left(sizeT1);
-        t2 = binHash.left(sizeT1);
-        sizeT2 = sizeT1;
+        QByteArray t1;
+        QByteArray t2;
+        int sizeT2;
 
-        qDebug() << "Size template T1 : " << sizeT1;
+        if(sizeTotal == sizeT1)
+        {
+            qDebug() << "Number of template : 1";
 
-    } else { // 2 template
+            t1 = binHash.left(sizeT1);
+            t2 = binHash.left(sizeT1);
+            sizeT2 = sizeT1;
 
-        qDebug() << "Number of template : 2";
+            qDebug() << "Size template T1 : " << sizeT1;
 
-        t1 = binHash.left(sizeT1);
-        t2 = binHash.right(sizeTotal-sizeT1);
-        sizeT2 = integerFromArray(t2,8);
+        } else { // 2 template
 
-        qDebug() << "Size template T1 : " << sizeT1;
-        qDebug() << "Size template T2 : " << sizeT2;
+            qDebug() << "Number of template : 2";
+
+            t1 = binHash.left(sizeT1);
+            t2 = binHash.right(sizeTotal-sizeT1);
+            sizeT2 = integerFromArray(t2,8);
+
+            qDebug() << "Size template T1 : " << sizeT1;
+            qDebug() << "Size template T2 : " << sizeT2;
+        }
+
+        newFingerprint.replace(4,sizeT1,t1);
+
+        for(int i = sizeT1 + 4;i<= 1600 + 4;i++)
+            newFingerprint[i] = 0x00;
+
+        newFingerprint.replace(800 + 4,sizeT2,t2);
+
+        for(int i = 1600 + 4;i< sizeFingerprint;i++)
+            newFingerprint[i] = 0xFF;
     }
 
-    newFingerprint.replace(4,sizeT1,t1);
+    if(format == SecugenSda04::SG400)
+    {
+        newFingerprint.replace(4,sizeTotal,binHash);
 
-    for(int i = sizeT1 + 4;i<= 1600 + 4;i++)
-        newFingerprint[i] = 0x00;
+        for(int i = 800 + 4;i< sizeFingerprint;i++)
+            newFingerprint[i] = 0xFF;
+    }
 
-    newFingerprint.replace(800 + 4,sizeT2,t2);
-
-    for(int i = 1600 + 4;i< sizeFingerprint;i++)
-        newFingerprint[i] = 0xFF;
-
+    const char change = replace? 0x01 : 0x00;
     DataContainer dataContainer;
-    executeCommand(0x71,dataContainer,0x00,0x00,0x00,0x00,0x06,0x50,0x00,0x00,QSerialPort::Baud9600,newFingerprint);
+    executeCommand(0x71,dataContainer,0x00,change,0x00,0x00,0x06,0x50,0x00,0x00,QSerialPort::Baud9600,newFingerprint);
 
     if(dataContainer.error() == SecugenSda04::ERROR_INSUFFICIENT_DATA)
         return -1;
