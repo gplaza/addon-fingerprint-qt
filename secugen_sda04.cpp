@@ -180,7 +180,8 @@ int SecugenSda04::registerUser(QString hash, int userID, bool replace, int forma
     int sizeTotal = binHash.size();
 
     qDebug() << "Hash detail :";
-    qDebug() << "Size total : " << sizeTotal;
+    qDebug() << "Size total hash : " << sizeTotal;
+    qDebug() << "Size minutiae data to create : " << sizeFingerprint;
 
     if(format == SecugenSda04::ANSI378)
     {
@@ -221,6 +222,7 @@ int SecugenSda04::registerUser(QString hash, int userID, bool replace, int forma
 
         for(int i = 1600 + 4;i< sizeFingerprint;i++)
             newFingerprint[i] = 0xFF;
+
     }
 
     if(format == SecugenSda04::SG400)
@@ -231,9 +233,13 @@ int SecugenSda04::registerUser(QString hash, int userID, bool replace, int forma
             newFingerprint[i] = 0xFF;
     }
 
+    // Parameters :
+    const char sizeParam2L = (format == SecugenSda04::ANSI378)? 0x06 : 0x03;
+    const char sizeParam2H = (format == SecugenSda04::ANSI378)? 0x50 : 0x30;
     const char change = replace? 0x01 : 0x00;
+
     DataContainer dataContainer;
-    executeCommand(0x71,dataContainer,0x00,change,0x00,0x00,0x06,0x50,0x00,0x00,QSerialPort::Baud9600,newFingerprint);
+    executeCommand(0x71,dataContainer,0x00,change,0x00,0x00,sizeParam2L,sizeParam2H,0x00,0x00,QSerialPort::Baud9600,newFingerprint);
 
     if(dataContainer.error() == SecugenSda04::ERROR_INSUFFICIENT_DATA)
         return -1;
