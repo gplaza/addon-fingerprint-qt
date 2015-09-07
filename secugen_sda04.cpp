@@ -60,39 +60,16 @@ void SecugenSda04::stopWaitForFinger()
 
 int SecugenSda04::getuserIDavailable()
 {
-    DataContainer dataContainer;
-    QByteArray data;
-    QByteArray tmp;
-    QString u;
-    QSet<uint> ids;
-    int id,i;
-    bool ok;
+    QList<int> ids;
+    int i = 1;
+    ids = getuserIDs();
 
-    executeCommand(0x7d,dataContainer);
-
-    if(dataContainer.error() == SecugenSda04::ERROR_DB_NO_DATA)
-        i = 1;
-    else {
-
-        data = dataContainer.packet();
-
-        for(i = 0; i <= data.size(); i = i+2)
-        {
-            tmp = data.mid(i,2);
-            u = QString::number(tmp[1], 16) + QString::number(tmp[0], 16);
-            id = u.toUInt(&ok,10);
-            ids.insert(id);
-        }
-
-        i = 0;
-
-        while(i <= 9999)
-        {
-            if(ids.contains(i))
-                i++;
-            else
-                break;
-        }
+    while(i <= 9999)
+    {
+        if(ids.contains(i))
+            i++;
+        else
+            break;
     }
 
     qDebug() << "New ID for fingerprint : "  << i;
@@ -104,27 +81,36 @@ QList<int> SecugenSda04::getuserIDs()
 {
     DataContainer dataContainer;
     QByteArray data;
-    QByteArray tmp;
     QString u;
     QSet<int> ids;
-    int id,i;
+    int id;
     bool ok;
     QList<int> list;
 
-    executeCommand(0x7d,dataContainer);
+    executeCommand(0x7d,dataContainer,0x00,0x01);
+
+    QString numberIDs = dataContainer.param1();
+    uint sizeID = numberIDs.toUInt(&ok,16);
 
     if(dataContainer.error() == SecugenSda04::ERROR_DB_NO_DATA)
         qDebug() << "ID Empty";
     else {
 
-        data = dataContainer.packet();
+        qDebug() << "Number of ID : " << QString::number(sizeID);
 
-        for(i = 0; i <= data.size(); i = i+2)
+        data = dataContainer.packet();
+        int i = 0;
+
+        for(uint j = 0; j < sizeID; j++)
         {
-            tmp = data.mid(i,2);
-            u = QString::number(tmp[1], 16) + QString::number(tmp[0], 16);
+            QString hVal = (QString::number(data[i+1], 16).length() == 1)? ("0" + QString::number(data[i+1], 16)) : QString::number(data[i+1], 16);
+            QString lVal = (QString::number(data[i+0], 16).length() == 1)? ("0" + QString::number(data[i+0], 16)) : QString::number(data[i+0], 16);
+
+            u = hVal + lVal;
             id = u.toInt(&ok,10);
+
             ids.insert(id);
+            i = i + 12;
         }
 
         list = QList<int>::fromSet(ids);
