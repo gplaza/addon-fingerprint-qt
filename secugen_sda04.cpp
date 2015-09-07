@@ -166,6 +166,7 @@ int SecugenSda04::registerUser(QString hash, int userID, bool replace, int forma
     int sizeTotal = binHash.size();
 
     qDebug() << "Hash detail :";
+    qDebug() << "Format : " << (format == SecugenSda04::ANSI378? "ANSI:378" : "SG400");
     qDebug() << "Size total hash : " << sizeTotal;
     qDebug() << "Size minutiae data to create : " << sizeFingerprint;
 
