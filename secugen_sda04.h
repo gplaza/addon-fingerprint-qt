@@ -124,7 +124,10 @@ public:
     uint id()
     {
         bool ok;
-        QString hexId = QString::number(m_ack[3], 16) + QString::number(m_ack[2], 16);
+        QString s1 = (QString::number(m_ack[3], 16).length() == 1)? ("0" + QString::number(m_ack[3], 16)) : QString::number(m_ack[3], 16);
+        QString s2 = (QString::number(m_ack[2], 16).length() == 1)? ("0" + QString::number(m_ack[2], 16)) : QString::number(m_ack[2], 16);
+
+        QString hexId = "0x" + s1 + s2;
         return hexId.toUInt(&ok,10);
     }
 
@@ -151,7 +154,12 @@ public:
     uint packetSize()
     {
         bool ok;
-        QString hexSize = "0x" + QString::number(m_ack[9], 16) + QString::number(m_ack[8], 16) + QString::number(m_ack[7], 16) + QString::number(m_ack[6], 16);
+        QString s1 = (QString::number(m_ack[9], 16).length() == 1)? ("0" + QString::number(m_ack[9], 16)) : QString::number(m_ack[9], 16);
+        QString s2 = (QString::number(m_ack[8], 16).length() == 1)? ("0" + QString::number(m_ack[8], 16)) : QString::number(m_ack[8], 16);
+        QString s3 = (QString::number(m_ack[7], 16).length() == 1)? ("0" + QString::number(m_ack[7], 16)) : QString::number(m_ack[7], 16);
+        QString s4 = (QString::number(m_ack[6], 16).length() == 1)? ("0" + QString::number(m_ack[6], 16)) : QString::number(m_ack[6], 16);
+
+        QString hexSize = "0x" + s1 + s2 + s3 + s4;
         return hexSize.toUInt(&ok,16);
     }
 
