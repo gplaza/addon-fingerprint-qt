@@ -128,7 +128,7 @@ public:
         QString s2 = (QString::number(m_ack[2], 16).length() == 1)? ("0" + QString::number(m_ack[2], 16)) : QString::number(m_ack[2], 16);
 
         QString hexId = "0x" + s1 + s2;
-        return hexId.toUInt(&ok,10);
+        return hexId.toUInt(&ok,16);
     }
 
     QString param2()
