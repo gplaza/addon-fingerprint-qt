@@ -118,7 +118,10 @@ public:
 
     QString param1()
     {
-        return "0x" + QString::number(m_ack[3], 16) + QString::number(m_ack[2], 16);
+        QString s1 = (QString::number(m_ack[3], 16).length() == 1)? ("0" + QString::number(m_ack[3], 16)) : QString::number(m_ack[3], 16);
+        QString s2 = (QString::number(m_ack[2], 16).length() == 1)? ("0" + QString::number(m_ack[2], 16)) : QString::number(m_ack[2], 16);
+
+        return "0x" + s1 + s2;
     }
 
     uint id()
@@ -133,7 +136,10 @@ public:
 
     QString param2()
     {
-        return  "0x" + QString::number(m_ack[5], 16) + QString::number(m_ack[4], 16);
+        QString s1 = (QString::number(m_ack[5], 16).length() == 1)? ("0" + QString::number(m_ack[5], 16)) : QString::number(m_ack[5], 16);
+        QString s2 = (QString::number(m_ack[4], 16).length() == 1)? ("0" + QString::number(m_ack[4], 16)) : QString::number(m_ack[4], 16);
+
+        return  "0x" + s1 + s2;
     }
 
     QString checkSum()
