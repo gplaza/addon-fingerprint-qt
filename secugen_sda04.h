@@ -184,6 +184,7 @@ public:
     explicit SecugenSda04(const QString serialPort = "/dev/ttyAMA0");
     void setSerialPort(qint32 baudRate);
     QVariant scanFinger();
+    bool verifyFinger(int userID);
     int getImage(QByteArray &img, int imageSize = SecugenSda04::IMAGE_FULL_SIZE);
     int getuserIDavailable();
     QList<int> getuserIDs();
