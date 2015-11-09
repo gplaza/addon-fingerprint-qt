@@ -328,7 +328,6 @@ bool SecugenSda04::verifyFinger(int userID)
     std::vector<int> hexs = intToHex(userID);
     executeCommand(0x55,dataContainer,hexs[1],hexs[0]);
 
-
     return (dataContainer.error() == 0);
 }
 
@@ -400,6 +399,27 @@ void SecugenSda04::executeCommand(const char cmd, DataContainer &dataContainer, 
     if(!data.isEmpty())
         serial.write(data.constData(),data.size());
 
+    //qDebug() << "Serial input :";
+    //qDebug() << "Serial baud  :" << serial.baudRate();
+    //qDebug() << "command      :" << "0x" + characterToHexQString(cmd);
+    //qDebug() << "param1       :" << "0x" + characterToHexQString(param1Hight) + characterToHexQString(param1Low) + "(Hight:" + characterToHexQString(param1Hight) + "/Low:" + characterToHexQString(param1Low) + ")";
+    //qDebug() << "param2       :" << "0x" + characterToHexQString(param2Hight) + characterToHexQString(param2Low) + "(Hight:" + characterToHexQString(param2Hight) + "/Low:" + characterToHexQString(param2Low) + ")";
+    //qDebug() << "Check sum    :" << "0x" + characterToHexQString(checkSum[0]);
+
+    QString completeCommand = characterToHexQString(channel);
+    completeCommand += " " + characterToHexQString(cmd);
+    completeCommand += " " + characterToHexQString(param1Low);
+    completeCommand += " " + characterToHexQString(param1Hight);
+    completeCommand += " " + characterToHexQString(param2Low);
+    completeCommand += " " + characterToHexQString(param2Hight);
+    completeCommand += " " + characterToHexQString(lwExtraDataLow);
+    completeCommand += " " + characterToHexQString(lwExtraDataHight);
+    completeCommand += " " + characterToHexQString(hwExtraDataLow);
+    completeCommand += " " + characterToHexQString(hwExtraDataHight);
+    completeCommand += " " + characterToHexQString(stub);
+    completeCommand += " " + characterToHexQString(checkSum[0]);
+    //qDebug() << "complete     :" <<  completeCommand;
+
     if (serial.waitForBytesWritten(1000)) {
 
         QByteArray ack;
@@ -407,7 +427,7 @@ void SecugenSda04::executeCommand(const char cmd, DataContainer &dataContainer, 
 
         while(ack.size() < 12 && i < timeoutSerial)
         {
-            if(serial.waitForReadyRead(1000))
+            if(serial.waitForReadyRead(10000))
                 ack += serial.readAll();
             i++;
         }
@@ -415,6 +435,7 @@ void SecugenSda04::executeCommand(const char cmd, DataContainer &dataContainer, 
         if(i == timeoutSerial) {
 
             error = true;
+
             qCritical() << "serial timeout error";
 
         } else {
@@ -430,7 +451,6 @@ void SecugenSda04::executeCommand(const char cmd, DataContainer &dataContainer, 
             qDebug() << "Parameter 02 : " << dataContainer.param2();
             qDebug() << "ACK Packet size : " << completeSize;
 #endif
-
             if(dataContainer.error() == SecugenSda04::ERROR_NONE)
             {
                 if(completeSize > 0)
