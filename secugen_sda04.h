@@ -71,6 +71,20 @@
     "f0f000f1f1f100f2f2f200f3f3f300f4f4f400f5f5f500f6f6f600f7f7f700f8f8f800f"\
     "9f9f900fafafa00fbfbfb00fcfcfc00fdfdfd00fefefe00ffffff00"
 
+class Trigger : public QObject
+{
+    Q_OBJECT
+public:
+
+    Trigger(QObject *parent=0) : QObject(parent)
+    {
+    }
+signals:
+    void triggered();
+
+public slots:
+};
+
 class DataContainer : public QObject
 {
     Q_OBJECT
@@ -181,13 +195,15 @@ class SecugenSda04 : public IFingerprint
     Q_ENUMS(ErrorReader)
 
 public:
-    explicit SecugenSda04(const QString serialPort = "/dev/ttyAMA0");
+    explicit SecugenSda04(const QString serialPort = "/dev/ttyAMA0", int AutoOnPin = 7);
     void setSerialPort(qint32 baudRate);
     QVariant scanFinger();
     bool verifyFinger(int userID);
     int getImage(QByteArray &img, int imageSize = SecugenSda04::IMAGE_FULL_SIZE);
     int getuserIDavailable();
     QList<int> getuserIDs();
+
+    void autoOn();
 
     int registerNewUserStart(int userID);
     int registerNewUserEnd(int userID);
@@ -236,7 +252,7 @@ public:
 
 protected:
     bool error;
-    void executeCommand(const char cmd, DataContainer &dataContainer, const char param1Hight = 0x00, const char param1Low = 0x00, const char param2Hight = 0x00, const char param2Low = 0x00,const char lwExtraDataHight = 0x00,const char lwExtraDataLow = 0x00,const char hwExtraDataHight = 0x00,const char hwExtraDataLow = 0x00, quint32 baudRate = QSerialPort::Baud9600, QByteArray data= QByteArray());
+    void executeCommand(const char cmd, DataContainer &dataContainer, const char param1Hight = 0x00, const char param1Low = 0x00, const char param2Hight = 0x00, const char param2Low = 0x00,const char lwExtraDataHight = 0x00,const char lwExtraDataLow = 0x00,const char hwExtraDataHight = 0x00,const char hwExtraDataLow = 0x00, quint32 baudRate = QSerialPort::Baud57600, QByteArray data= QByteArray());
 
 private:
     QSerialPort serial;
@@ -248,7 +264,9 @@ private:
     std::vector<int> intToHex(int id);
 
 private slots:
-    virtual void checkFingerTouch() = 0;
+    void checkFingerTouch() {
+        // Not used
+    }
 
 public slots:
     void waitForFinger();

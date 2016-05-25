@@ -1,15 +1,38 @@
 #include "secugen_sda04.h"
 #define CMD_GET_VERSION 0x05
 
-SecugenSda04::SecugenSda04(const QString serialPort): IFingerprint() {
+Trigger trigger;
+void interrupt()
+{
+    emit trigger.triggered();
+}
+
+SecugenSda04::SecugenSda04(const QString serialPort, int AutoOnPin): IFingerprint() {
 
     error = false;
     timeoutSerial = 5;
     serial.setPortName(serialPort);
-    qDebug() << "Init fingerprintreader Secugen SDA04 : " << serialPort;
+    qDebug() << "Init fingerprintreader Secugen on " << serialPort;
+
+    wiringPiSetup();
+    wiringPiISR(AutoOnPin, INT_EDGE_FALLING, *interrupt);
+
+    DataContainer dataContainer;
+    // Set Reader to 57.600 Bauds
+    executeCommand(0x21,dataContainer,0x00,0x03,0x00,0x00,0x00,0x00,0x00,0x00,QSerialPort::Baud9600);
+    // Wait for change baud
+    QThread::sleep(2);
+    // Check fingerprint reader status
+    executeCommand(0x30,dataContainer,0x00,0x04);
 
     if(error)
         qCritical() << "Fingerprintreader not detected";
+}
+
+void SecugenSda04::autoOn() {
+
+    qDebug() << "Finger detected";
+    emit fingerDetected();
 }
 
 void SecugenSda04::setSerialPort(qint32 baudRate)
@@ -46,16 +69,12 @@ void SecugenSda04::setSerialPort(qint32 baudRate)
 
 void SecugenSda04::waitForFinger()
 {
-    timerFinger = new QTimer();
-    connect(timerFinger, &QTimer::timeout, this, &SecugenSda04::checkFingerTouch);
-    qDebug() << "Init read FINGERPRINT process";
-    timerFinger->start(500);
+    QObject::connect(&trigger, &Trigger::triggered, this, &SecugenSda04::autoOn);
 }
 
 void SecugenSda04::stopWaitForFinger()
 {
-    if(timerFinger && !error)
-        timerFinger->stop();
+    QObject::disconnect(&trigger, &Trigger::triggered, this, &SecugenSda04::autoOn);
 }
 
 int SecugenSda04::getuserIDavailable()
@@ -376,51 +395,35 @@ int SecugenSda04::getImage(QByteArray &img, int imageSize)
 void SecugenSda04::executeCommand(const char cmd, DataContainer &dataContainer, const char param1Hight, const char param1Low, const char param2Hight, const char param2Low ,const char lwExtraDataHight,const char lwExtraDataLow,const char hwExtraDataHight,const char hwExtraDataLow, quint32 baudRate, QByteArray data)
 {
     setSerialPort(baudRate);
-
+#ifdef QT_DEBUG
+    qDebug() << "Serial configured to" << QString::number(serial.baudRate()) << "bauds";
+#endif
     const char channel = 0x00;
     const char stub = 0x00;
 
     int cks = ((int)cmd + (int)param1Hight + (int)param1Low + (int)param2Hight + (int)param2Low +(int)lwExtraDataLow + (int)lwExtraDataHight + (int)hwExtraDataLow + (int)hwExtraDataHight) % 256;
-    const char checkSum[] = { cks };
+    unsigned char buf[12];
 
-    serial.write(&channel,1); // channel 1 byte (alway the same)
-    serial.write(&cmd,1); // command 1 byte
-    serial.write(&param1Low,1); // param1 2 bytes (byte low)
-    serial.write(&param1Hight,1); // param1 2 bytes (byte hight)
-    serial.write(&param2Low,1); // param2 2 bytes (byte low)
-    serial.write(&param2Hight,1); // param2 2 bytes (byte hight)
-    serial.write(&lwExtraDataLow,1); // lwExtraData 2 bytes (byte low)
-    serial.write(&lwExtraDataHight,1); // lwExtraData 2 bytes (byte hight)
-    serial.write(&hwExtraDataLow,1); // hwExtraData 2 bytes (byte low)
-    serial.write(&hwExtraDataHight,1); // hwExtraData 2 bytes (byte hight)
-    serial.write(&stub,1); // ErrorCode 1 byte
-    serial.write(&checkSum[0],1); // Checksum 1 byte
+    buf[0] = channel;
+    buf[1] = cmd;
+    buf[2] = param1Low;
+    buf[3] = param1Hight;
+    buf[4] = param2Low;
+    buf[5] = param2Hight;
+    buf[6] = lwExtraDataLow;
+    buf[7] = lwExtraDataHight;
+    buf[8] = hwExtraDataLow;
+    buf[9] = hwExtraDataHight;
+    buf[10] = stub;
+    buf[11] = cks;
+
+    QByteArray databuf = QByteArray(reinterpret_cast<char*>(buf), 12);
+    serial.write(databuf);
 
     if(!data.isEmpty())
         serial.write(data.constData(),data.size());
 
-    //qDebug() << "Serial input :";
-    //qDebug() << "Serial baud  :" << serial.baudRate();
-    //qDebug() << "command      :" << "0x" + characterToHexQString(cmd);
-    //qDebug() << "param1       :" << "0x" + characterToHexQString(param1Hight) + characterToHexQString(param1Low) + "(Hight:" + characterToHexQString(param1Hight) + "/Low:" + characterToHexQString(param1Low) + ")";
-    //qDebug() << "param2       :" << "0x" + characterToHexQString(param2Hight) + characterToHexQString(param2Low) + "(Hight:" + characterToHexQString(param2Hight) + "/Low:" + characterToHexQString(param2Low) + ")";
-    //qDebug() << "Check sum    :" << "0x" + characterToHexQString(checkSum[0]);
-
-    QString completeCommand = characterToHexQString(channel);
-    completeCommand += " " + characterToHexQString(cmd);
-    completeCommand += " " + characterToHexQString(param1Low);
-    completeCommand += " " + characterToHexQString(param1Hight);
-    completeCommand += " " + characterToHexQString(param2Low);
-    completeCommand += " " + characterToHexQString(param2Hight);
-    completeCommand += " " + characterToHexQString(lwExtraDataLow);
-    completeCommand += " " + characterToHexQString(lwExtraDataHight);
-    completeCommand += " " + characterToHexQString(hwExtraDataLow);
-    completeCommand += " " + characterToHexQString(hwExtraDataHight);
-    completeCommand += " " + characterToHexQString(stub);
-    completeCommand += " " + characterToHexQString(checkSum[0]);
-    //qDebug() << "complete     :" <<  completeCommand;
-
-    if (serial.waitForBytesWritten(1000)) {
+    if (serial.waitForBytesWritten(1000) && cmd != 0x21) {
 
         QByteArray ack;
         int i = 0;
@@ -435,7 +438,6 @@ void SecugenSda04::executeCommand(const char cmd, DataContainer &dataContainer, 
         if(i == timeoutSerial) {
 
             error = true;
-
             qCritical() << "serial timeout error";
 
         } else {
