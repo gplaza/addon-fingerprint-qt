@@ -433,7 +433,6 @@ void SecugenSda04::executeCommand(const char cmd, DataContainer &dataContainer, 
             if(serial.waitForReadyRead(1000))
                 ack += serial.readAll();
             i++;
-            qDebug() << ack.size();
         }
 
         if(i == timeoutSerial) {
@@ -463,14 +462,9 @@ void SecugenSda04::executeCommand(const char cmd, DataContainer &dataContainer, 
 #endif
                     QByteArray data = ack.right(ack.size() - 12);
 
-                    while(data.size() < completeSize){
-
+                    while(data.size() < completeSize)
                         if(serial.waitForReadyRead(1000))
                             data += serial.readAll();
-
-                        qDebug() << data.size();
-
-                    }
 
 #ifdef QT_DEBUG
                     qDebug() << "data received (size : " << data.size() << ")";
