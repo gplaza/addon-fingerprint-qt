@@ -19,9 +19,9 @@ SecugenSda04::SecugenSda04(const QString serialPort, int AutoOnPin): IFingerprin
 
     DataContainer dataContainer;
     // Set Reader to 57.600 Bauds
-    executeCommand(0x21,dataContainer,0x00,0x03,0x00,0x00,0x00,0x00,0x00,0x00,QSerialPort::Baud9600);
+    executeCommand(0x21,dataContainer,0x00,0x03,0x00,0x00,0x00,0x00,0x00,0x00,QByteArray(),QSerialPort::Baud9600);
     // Wait for change baud
-    QThread::sleep(2);
+    QThread::sleep(5);
     // Check fingerprint reader status
     executeCommand(0x30,dataContainer,0x00,0x04);
 
@@ -245,7 +245,7 @@ int SecugenSda04::registerUser(QString hash, int userID, bool replace, int forma
     const char change = replace? 0x01 : 0x00;
 
     DataContainer dataContainer;
-    executeCommand(0x71,dataContainer,0x00,change,0x00,0x00,sizeParam2L,sizeParam2H,0x00,0x00,QSerialPort::Baud9600,newFingerprint);
+    executeCommand(0x71,dataContainer,0x00,change,0x00,0x00,sizeParam2L,sizeParam2H,0x00,0x00,newFingerprint,QSerialPort::Baud57600);
 
     if(dataContainer.error() == SecugenSda04::ERROR_INSUFFICIENT_DATA)
         return -1;
@@ -392,7 +392,7 @@ int SecugenSda04::getImage(QByteArray &img, int imageSize)
     return 0;
 }
 
-void SecugenSda04::executeCommand(const char cmd, DataContainer &dataContainer, const char param1Hight, const char param1Low, const char param2Hight, const char param2Low ,const char lwExtraDataHight,const char lwExtraDataLow,const char hwExtraDataHight,const char hwExtraDataLow, quint32 baudRate, QByteArray data)
+void SecugenSda04::executeCommand(const char cmd, DataContainer &dataContainer, const char param1Hight, const char param1Low, const char param2Hight, const char param2Low ,const char lwExtraDataHight,const char lwExtraDataLow,const char hwExtraDataHight,const char hwExtraDataLow, QByteArray data, quint32 baudRate)
 {
     setSerialPort(baudRate);
 #ifdef QT_DEBUG
@@ -430,9 +430,10 @@ void SecugenSda04::executeCommand(const char cmd, DataContainer &dataContainer, 
 
         while(ack.size() < 12 && i < timeoutSerial)
         {
-            if(serial.waitForReadyRead(10000))
+            if(serial.waitForReadyRead(1000))
                 ack += serial.readAll();
             i++;
+            qDebug() << ack.size();
         }
 
         if(i == timeoutSerial) {
@@ -462,9 +463,15 @@ void SecugenSda04::executeCommand(const char cmd, DataContainer &dataContainer, 
 #endif
                     QByteArray data = ack.right(ack.size() - 12);
 
-                    while(data.size() < completeSize)
-                        if(serial.waitForReadyRead(100))
+                    while(data.size() < completeSize){
+
+                        if(serial.waitForReadyRead(1000))
                             data += serial.readAll();
+
+                        qDebug() << data.size();
+
+                    }
+
 #ifdef QT_DEBUG
                     qDebug() << "data received (size : " << data.size() << ")";
 #endif

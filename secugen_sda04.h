@@ -252,7 +252,7 @@ public:
 
 protected:
     bool error;
-    void executeCommand(const char cmd, DataContainer &dataContainer, const char param1Hight = 0x00, const char param1Low = 0x00, const char param2Hight = 0x00, const char param2Low = 0x00,const char lwExtraDataHight = 0x00,const char lwExtraDataLow = 0x00,const char hwExtraDataHight = 0x00,const char hwExtraDataLow = 0x00, quint32 baudRate = QSerialPort::Baud57600, QByteArray data= QByteArray());
+    void executeCommand(const char cmd, DataContainer &dataContainer, const char param1Hight = 0x00, const char param1Low = 0x00, const char param2Hight = 0x00, const char param2Low = 0x00,const char lwExtraDataHight = 0x00,const char lwExtraDataLow = 0x00,const char hwExtraDataHight = 0x00,const char hwExtraDataLow = 0x00, QByteArray data= QByteArray(), quint32 baudRate = QSerialPort::Baud57600);
 
 private:
     QSerialPort serial;
