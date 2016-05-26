@@ -21,7 +21,7 @@ SecugenSda04::SecugenSda04(const QString serialPort, int AutoOnPin): IFingerprin
     // Set Reader to 57.600 Bauds
     executeCommand(0x21,dataContainer,0x00,0x03,0x00,0x00,0x00,0x00,0x00,0x00,QByteArray(),QSerialPort::Baud9600);
     // Wait for change baud
-    QThread::sleep(5);
+    QThread::sleep(2);
     // Check fingerprint reader status
     executeCommand(0x30,dataContainer,0x00,0x04);
 
